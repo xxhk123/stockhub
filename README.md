@@ -2,6 +2,8 @@
 
 实时查看 A 股、全球股指、商品汇率和自选收藏的行情看板。数据源为新浪财经 + Yahoo Finance。
 
+> 本项目使用 [Claude Code](https://claude.ai/code) 全程 AI 辅助开发完成。
+
 ## 功能
 
 - 国内主要指数（上证、深证、创业板、科创50、沪深300）
@@ -76,3 +78,5 @@ docker run -d --name stockhub -p 8080:80 --restart unless-stopped stockhub
 - Vue 3 + Vite
 - lightweight-charts（K 线/分时图）
 - Nginx（静态文件 + API 代理）
+
+> 由 [Claude Code](https://claude.ai/code) 辅助生成
