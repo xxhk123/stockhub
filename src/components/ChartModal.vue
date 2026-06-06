@@ -77,6 +77,10 @@ function getChartOptions() {
     crosshair: { mode: 0 },
     rightPriceScale: { borderColor: isDark ? '#333' : '#DDD' },
     timeScale: { borderColor: isDark ? '#333' : '#DDD', timeVisible: true },
+    localization: {
+      locale: 'zh-CN',
+      dateFormat: 'yyyy-MM-dd',
+    },
   }
 }
 
