@@ -30,7 +30,15 @@ const changeClass = computed(() => {
 })
 
 const displayCode = computed(() => {
-  return props.item.code ? props.item.code.replace(/^\^/, '') : ''
+  const c = props.item.code || ''
+  // 友好代号显示
+  const friendly = {
+    '^DJI': 'DJI', '^IXIC': 'IXIC', '^GSPC': 'GSPC',
+    '^HSI': 'HSI', '^N225': 'N225',
+    'GC=F': '黄金', 'SI=F': '白银', 'CL=F': '原油',
+    'CNY=X': 'CNY/CNH', 'BTC-USD': 'BTC',
+  }
+  return friendly[c] || c.replace(/^\^/, '')
 })
 
 const unit = computed(() => {
