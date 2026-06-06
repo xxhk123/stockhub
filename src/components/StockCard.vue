@@ -6,7 +6,7 @@
       <span class="card-code">{{ displayCode }}</span>
     </div>
     <div class="card-price">
-      {{ item.price != null ? formatPrice(item.price) : '--' }}
+      <span v-if="unit" class="price-unit">{{ unit }}</span>{{ item.price != null ? formatPrice(item.price) : '--' }}
     </div>
     <div class="card-change" :class="changeClass">
       {{ item.changePercent != null ? formatPercent(item.changePercent) : '--' }}
@@ -33,9 +33,26 @@ const displayCode = computed(() => {
   return props.item.code ? props.item.code.replace(/^\^/, '') : ''
 })
 
+const unit = computed(() => {
+  const code = props.item.code || ''
+  if (code.startsWith('sh') || code.startsWith('sz')) return ''
+  if (code.endsWith('=X')) return ''
+  return '$'
+})
+
 function formatPrice(price) {
   const n = parseFloat(price)
-  return isNaN(n) ? '--' : n.toFixed(2)
+  if (isNaN(n)) return '--'
+  const code = props.item.code || ''
+  // 汇率显示4位小数
+  if (code.endsWith('=X')) return n.toFixed(4)
+  // 商品/加密货币格式
+  if (['GC=F','SI=F','CL=F','BTC-USD'].some(s => code.includes(s))) {
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+  // 指数用2位小数
+  if (n > 1000) return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return n.toFixed(2)
 }
 
 function formatPercent(p) {
