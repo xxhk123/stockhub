@@ -51,15 +51,26 @@ function parseYahooData(code, data) {
     const quote = result.indicators?.quote?.[0]
     if (!meta || !quote) return null
 
-    const prices = quote.close || quote.open
-    const currentPrice = prices?.[prices.length - 1]
+    // Yahoo 可能返回 null close（非交易时段或商品期货未结算）
+    const closes = quote.close?.filter(c => c != null) || []
+    const opens = quote.open?.filter(c => c != null) || []
+    const currentPrice = closes.length > 0 ? closes[closes.length - 1]
+      : opens.length > 0 ? opens[opens.length - 1]
+      : null
+
+    if (currentPrice == null) return null
+
     const prevClose = meta.previousClose || meta.chartPreviousClose || currentPrice
-    const change = currentPrice - prevClose
-    const changePercent = ((change / prevClose) * 100).toFixed(2)
+
+    // 预防 prevClose 为 0 导致除零
+    if (!prevClose) return null
+
+    const change = +(currentPrice - prevClose)
+    const changePercent = +((change / prevClose) * 100).toFixed(2)
 
     return {
       code,
-      name: meta.shortName || code,
+      name: meta.shortName || meta.longName || code,
       price: currentPrice,
       change,
       changePercent,
@@ -115,8 +126,10 @@ export async function fetchGlobal(codes, signal) {
 
   const results = await Promise.allSettled(
     codes.map(async code => {
+      // 商品期货用 5d 范围提高数据可用性
+      const range = ['GC=F','SI=F','CL=F'].some(s => code.includes(s)) ? '5d' : '1d'
       const symbol = encodeURIComponent(code)
-      const data = await fetchYahooJson(`v8/finance/chart/${symbol}?range=1d&interval=1d`, signal)
+      const data = await fetchYahooJson(`v8/finance/chart/${symbol}?range=${range}&interval=1d`, signal)
       if (!data) return null
       return parseYahooData(code, data)
     })
@@ -135,7 +148,8 @@ export async function fetchStockData(code, signal) {
     return list[0] || null
   }
   // 其他走 Yahoo
-  const data = await fetchYahooJson(`v8/finance/chart/${encodeURIComponent(code)}?range=1d&interval=1d`, signal)
+  const range = ['GC=F','SI=F','CL=F'].some(s => code.includes(s)) ? '5d' : '1d'
+  const data = await fetchYahooJson(`v8/finance/chart/${encodeURIComponent(code)}?range=${range}&interval=1d`, signal)
   if (!data) return null
   return parseYahooData(code, data)
 }

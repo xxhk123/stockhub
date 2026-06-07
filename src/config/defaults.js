@@ -1,4 +1,4 @@
-export const REFRESH_INTERVAL = 3000 // 默认轮询间隔(ms)
+export const REFRESH_INTERVAL = 10000 // 默认轮询间隔(ms) — 10秒避免触发限流
 export const DATA_SOURCE = '新浪财经 / Yahoo Finance'
 
 export const DEFAULT_SECTIONS = {
