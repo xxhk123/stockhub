@@ -16,8 +16,9 @@
             @keyup.enter="handleSubmit"
           />
           <div class="form-hint">
-            国内代码格式: sh000001 / sz399001 / sh600036<br>
-            全球代码格式: AAPL / ^DJI / GC=F / BTC-USD
+            国内: 输入 6 位数字自动识别<br>
+            (6开头→沪 sh, 其他→深 sz) 如 000725<br>
+            全球: AAPL / ^DJI / GC=F / BTC-USD
           </div>
           <div v-if="errorMsg" class="form-error">{{ errorMsg }}</div>
         </div>
@@ -52,9 +53,14 @@ onMounted(() => {
 
 function normalizeCode(val) {
   val = val.trim()
-  // 国内代码保持小写 (sh/sz + 6位数字)
-  if (/^(sh|sz)?\d{6}$/i.test(val)) {
-    return val.toLowerCase().replace(/^(\d{6})$/, 'sh$1')
+  // 国内代码：6 位数字，自动识别 sh/sz
+  if (/^\d{6}$/i.test(val)) {
+    const prefix = val.startsWith('6') ? 'sh' : 'sz'
+    return prefix + val
+  }
+  // 已带 sh/sz 前缀
+  if (/^(sh|sz)\d{6}$/i.test(val)) {
+    return val.toLowerCase()
   }
   // 全球代码大写（Yahoo 符号）
   return val.toUpperCase()
