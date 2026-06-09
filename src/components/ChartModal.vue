@@ -84,6 +84,9 @@ function getChartOptions() {
   }
 }
 
+// 北京时间偏移（新浪返回的是北京时间，图表按 UTC 显示需修正）
+const TZ_OFFSET = 8 * 60 * 60
+
 // === 国内数据（新浪财经）===
 const SINA_SCALE = { '1d': 240, '60m': 60, '30m': 30, '5m': 5 }
 const SINA_LEN = { '1d': 320, '60m': 320, '30m': 200, '5m': 200 }
@@ -98,21 +101,24 @@ async function loadSinaKLine(code) {
   const isDaily = activePeriod.value === '1d'
   return {
     candles: data.map(item => {
-      const t = item.day.includes(' ') ? Math.floor(new Date(item.day.replace(/-/g, '/')).getTime() / 1000) : item.day
+      // 日线用日期字符串（图表自动按本地时区显示），分钟线加北京时间偏移
+      const t = item.day.includes(' ')
+        ? Math.floor(new Date(item.day.replace(/-/g, '/')).getTime() / 1000) + TZ_OFFSET
+        : item.day
       return { time: t, open: parseFloat(item.open), high: parseFloat(item.high), low: parseFloat(item.low), close: parseFloat(item.close) }
     }).filter(d => d.close > 0),
     ma5: isDaily ? data.map(d => ({ time: d.day, value: d.ma_price5 })).filter(d => d.value != null) : null,
   }
 }
 
-// 国内分时图
+// 国内分时图（5 分钟线）
 async function loadSinaIntraday(code) {
   const res = await fetch(`/api/sina-kline?symbol=${code}&scale=5&ma=5&datalen=100`)
   if (!res.ok) return null
   const data = await res.json()
   if (!Array.isArray(data) || data.length === 0) return null
   return data.map(item => {
-    const ts = Math.floor(new Date(item.day.replace(/-/g, '/')).getTime() / 1000)
+    const ts = Math.floor(new Date(item.day.replace(/-/g, '/')).getTime() / 1000) + TZ_OFFSET
     return { time: ts, value: parseFloat(item.close) }
   }).filter(d => d.value > 0)
 }
