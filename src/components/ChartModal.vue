@@ -84,7 +84,7 @@ function getChartOptions() {
   }
 }
 
-// 北京时间偏移（新浪返回的是北京时间，图表按 UTC 显示需修正）
+// 北京时间偏移（新浪分钟数据是 UTC+8，图表按 UTC 显示，需加 8 小时）
 const TZ_OFFSET = 8 * 60 * 60
 
 // === 国内数据（新浪财经）===
@@ -101,7 +101,7 @@ async function loadSinaKLine(code) {
   const isDaily = activePeriod.value === '1d'
   return {
     candles: data.map(item => {
-      // 日线用日期字符串（图表自动按本地时区显示），分钟线加北京时间偏移
+      // 日线用日期字符串（图表自动按本地时区），分钟线加北京时间偏移
       const t = item.day.includes(' ')
         ? Math.floor(new Date(item.day.replace(/-/g, '/')).getTime() / 1000) + TZ_OFFSET
         : item.day
@@ -111,7 +111,7 @@ async function loadSinaKLine(code) {
   }
 }
 
-// 国内分时图（5 分钟线）
+// 国内分时图
 async function loadSinaIntraday(code) {
   const res = await fetch(`/api/sina-kline?symbol=${code}&scale=5&ma=5&datalen=100`)
   if (!res.ok) return null
