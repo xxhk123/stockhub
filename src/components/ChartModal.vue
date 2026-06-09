@@ -84,8 +84,18 @@ function getChartOptions() {
   }
 }
 
-// 北京时间偏移（Lightweight Charts 数值时间戳按 UTC 显示，新浪北京时间需加 8 小时）
-const TZ_OFFSET = 8 * 60 * 60
+// 将新浪时间字符串转为时间戳
+// 数值型时间戳（Lightweight Charts 按 UTC 显示），因此将北京时间构造为等价的 UTC 时间
+function sinaTimeToTimestamp(dayStr) {
+  // 格式: "2026-06-09" 或 "2026-06-09 14:30"
+  const parts = dayStr.split(/[\s-:]/).filter(Boolean).map(Number)
+  if (parts.length >= 5) {
+    // 含时间，构造为 UTC（图表显示的就是北京时间）
+    return Math.floor(Date.UTC(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]) / 1000)
+  }
+  // 仅日期，返回字符串
+  return dayStr
+}
 
 // === 国内数据（新浪财经）===
 const SINA_SCALE = { '1d': 240, '60m': 60, '30m': 30, '5m': 5 }
@@ -100,13 +110,13 @@ async function loadSinaKLine(code) {
   if (!Array.isArray(data) || data.length === 0) return null
   const isDaily = activePeriod.value === '1d'
   return {
-    candles: data.map(item => {
-      // 日线用日期字符串（不涉及时区），分钟线加 UTC+8 偏移
-      const t = item.day.includes(' ')
-        ? Math.floor(new Date(item.day.replace(/-/g, '/')).getTime() / 1000) + TZ_OFFSET
-        : item.day
-      return { time: t, open: parseFloat(item.open), high: parseFloat(item.high), low: parseFloat(item.low), close: parseFloat(item.close) }
-    }).filter(d => d.close > 0),
+    candles: data.map(item => ({
+      time: sinaTimeToTimestamp(item.day),
+      open: parseFloat(item.open),
+      high: parseFloat(item.high),
+      low: parseFloat(item.low),
+      close: parseFloat(item.close),
+    })).filter(d => d.close > 0),
     ma5: isDaily ? data.map(d => ({ time: d.day, value: d.ma_price5 })).filter(d => d.value != null) : null,
   }
 }
@@ -117,10 +127,10 @@ async function loadSinaIntraday(code) {
   if (!res.ok) return null
   const data = await res.json()
   if (!Array.isArray(data) || data.length === 0) return null
-  return data.map(item => {
-    const ts = Math.floor(new Date(item.day.replace(/-/g, '/')).getTime() / 1000) + TZ_OFFSET
-    return { time: ts, value: parseFloat(item.close) }
-  }).filter(d => d.value > 0)
+  return data.map(item => ({
+    time: sinaTimeToTimestamp(item.day),
+    value: parseFloat(item.close),
+  })).filter(d => d.value > 0)
 }
 
 // === 全球数据（Yahoo Finance）===
