@@ -63,6 +63,8 @@ const periods = [
 
 function getChartOptions() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+  // 日线只显示日期，分时图和分钟级 K 线显示时间
+  const showTime = activeTab.value !== 'kline' || activePeriod.value !== '1d'
   return {
     width: chartContainer.value?.clientWidth || 780,
     height: 400,
@@ -76,7 +78,7 @@ function getChartOptions() {
     },
     crosshair: { mode: 0 },
     rightPriceScale: { borderColor: isDark ? '#333' : '#DDD' },
-    timeScale: { borderColor: isDark ? '#333' : '#DDD', timeVisible: true },
+    timeScale: { borderColor: isDark ? '#333' : '#DDD', timeVisible: showTime },
     localization: {
       locale: 'zh-CN',
       dateFormat: 'yyyy-MM-dd',
