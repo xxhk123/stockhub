@@ -63,8 +63,6 @@ const periods = [
 
 function getChartOptions() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
-  // 日线只显示日期，分时图和分钟级 K 线显示时间
-  const showTime = activeTab.value !== 'kline' || activePeriod.value !== '1d'
   return {
     width: chartContainer.value?.clientWidth || 780,
     height: 400,
@@ -78,7 +76,7 @@ function getChartOptions() {
     },
     crosshair: { mode: 0 },
     rightPriceScale: { borderColor: isDark ? '#333' : '#DDD' },
-    timeScale: { borderColor: isDark ? '#333' : '#DDD', timeVisible: showTime },
+    timeScale: { borderColor: isDark ? '#333' : '#DDD', timeVisible: true },
     localization: {
       locale: 'zh-CN',
       dateFormat: 'yyyy-MM-dd',
@@ -86,7 +84,7 @@ function getChartOptions() {
   }
 }
 
-// 北京时间偏移（新浪分钟数据是 UTC+8，图表按 UTC 显示，需加 8 小时）
+// 北京时间偏移（Lightweight Charts 数值时间戳按 UTC 显示，新浪北京时间需加 8 小时）
 const TZ_OFFSET = 8 * 60 * 60
 
 // === 国内数据（新浪财经）===
@@ -103,7 +101,7 @@ async function loadSinaKLine(code) {
   const isDaily = activePeriod.value === '1d'
   return {
     candles: data.map(item => {
-      // 日线用日期字符串（图表自动按本地时区），分钟线加北京时间偏移
+      // 日线用日期字符串（不涉及时区），分钟线加 UTC+8 偏移
       const t = item.day.includes(' ')
         ? Math.floor(new Date(item.day.replace(/-/g, '/')).getTime() / 1000) + TZ_OFFSET
         : item.day
